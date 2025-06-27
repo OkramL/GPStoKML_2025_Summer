@@ -1,6 +1,9 @@
 package models;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,9 +40,15 @@ public class Model {
                 ViewParameters viewParameters = DataPoint.calculateViewParameters(dataPoints);
 
                 switch (settings.getTypeMap()) {
-
+                    case "map" -> new KmlGenerator(settings, this).build();
                 }
 
+                if(!settings.isKmzFile()) { // Kui on KML failid, siis tee kaust files koos ikoonidega
+                    copyIconsToFolder();
+                } else { // Create KMZ file
+                    new KmzGenerator(settings, this, viewParameters);
+                    System.out.println("Created file " + settings.getFileKmz());
+                }
             }
         } else {
             System.err.println("No files found! Interrupting...");
@@ -228,8 +237,6 @@ public class Model {
         }
     }
 
-
-
     /**
      * Validates whether a string matches the expected datetime format "yyyy-MM-dd HH:mm:ss".
      *
@@ -356,7 +363,56 @@ public class Model {
         }
     }
 
+    private void copyIconsToFolder() {
+        String[] icons = {getIconStart(), getIconEnd(), getIconParking(), getIconDirection()};
+        // Määra väljundkaust (võid muuta vastavalt vajadusele)
+        Path targetDir = Paths.get("files");
+        try {
+            Files.createDirectories(targetDir);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (String icon : icons) {
+            Path target = targetDir.resolve(icon);
+            if (Files.exists(target)) {
+                // Ikka juba olemas, vahele jätta
+                continue;
+            }
+
+            try (InputStream in = ClassLoader.getSystemResourceAsStream(icon)) {
+                if (in == null) {
+                    System.err.println("Resource not found: " + icon);
+                    continue;
+                }
+                Files.copy(in, target);
+                //System.out.println("Copied " + icon + " to " + target);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     // GETTERS
+    public String getIconStart() {
+        return "a.png";
+    }
+
+    public String getIconEnd() {
+        return "b.png";
+    }
+
+    public String getIconParking() {
+        return "parking.png";
+    }
+
+    public String getIconDirection() {
+        return "direction.png";
+    }
+
+    public List<DataPoint> getDataPoints() {
+        return dataPoints;
+    }
 
     public DateTimeFormatter getDateTimeEstonia() {
         return dateTimeEstonia;

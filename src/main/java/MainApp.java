@@ -2,7 +2,6 @@ import models.Model;
 import models.Settings;
 import version.BuildInfo;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MainApp {

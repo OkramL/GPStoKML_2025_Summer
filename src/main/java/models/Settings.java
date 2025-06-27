@@ -55,6 +55,7 @@ public class Settings {
     private boolean DEFAULT_FILE_MERGE = false; // Files with the same date are merged into a single file
     private boolean DEFAULT_KM_SIGN = false;
     private boolean DEFAULT_KM_SIGN_VISIBILITY = false;
+    private boolean DEFAULT_KMZ_FILE = false;
 
     // Other
     private TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("UTC");
@@ -90,6 +91,8 @@ public class Settings {
     private boolean fileMerge;
     private boolean kmSign;
     private boolean kmSignVisibility;
+    private boolean kmzFile;
+
     private TimeZone timeZone;
 
     public Settings() throws IOException {
@@ -149,6 +152,7 @@ public class Settings {
             this.fileMerge = parseBoolean(config.getSection("Boolean").getString("file_merge"), DEFAULT_FILE_MERGE, "file_merge");
             this.kmSign = parseBoolean(config.getSection("Boolean").getString("km_sign"), DEFAULT_KM_SIGN, "km_sign");
             this.kmSignVisibility = parseBoolean(config.getSection("Boolean").getString("km_sign_visibility"), DEFAULT_KM_SIGN_VISIBILITY, "km_sign_visibility");
+            this.kmzFile = parseBoolean(config.getSection("Boolean").getString("kmz_file"), DEFAULT_KMZ_FILE, "kmz_file");
 
             this.colorRoad = parseColor(config.getSection("Color").getString("color_road"), DEFAULT_COLOR_ROAD, "color_road");
             this.colorSpeed = parseColor(config.getSection("Color").getString("color_speed"), DEFAULT_COLOR_SPEED, "color_speed");
@@ -555,6 +559,10 @@ public class Settings {
 
     public boolean isKmSignVisibility() {
         return kmSignVisibility;
+    }
+
+    public boolean isKmzFile() {
+        return kmzFile;
     }
 
     public TimeZone getTimeZone() {

@@ -61,6 +61,9 @@ public class SettingsExample {
             # Are the kilometer posts visible on the map or do they need to be clicked separately? (by default requires
             # clicking - false). Also for speed marker to.
             km_sign_visibility=false
+            # Create a KMZ file or not. If not, a files folder will be created with the necessary icons, so the kml file must be\s
+            # shared with this folder so that the icons are visible on the map.
+            kmz_file=false
             [Color]
             # Make a color on the map. RGB color. Numbers 0-255 including 0,0,255 => blue
             color_road=0,0,255
