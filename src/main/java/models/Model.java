@@ -363,6 +363,19 @@ public class Model {
         }
     }
 
+    /**
+     * Copies predefined icon files from the application resources to the local "files" directory.
+     * <p>
+     * This method ensures that required icon images used in KML or KMZ generation are available
+     * in the correct location relative to the generated output. If a file already exists in the
+     * target folder, it will not be overwritten. The method works both in development environments
+     * and when the application is packaged as a JAR.
+     * <p>
+     * The icon file names are provided by the methods {@code getIconStart()}, {@code getIconEnd()},
+     * {@code getIconParking()}, and {@code getIconDirection()}.
+     *
+     * @throws RuntimeException if a directory cannot be created or a file cannot be copied.
+     */
     private void copyIconsToFolder() {
         String[] icons = {getIconStart(), getIconEnd(), getIconParking(), getIconDirection()};
         // Määra väljundkaust (võid muuta vastavalt vajadusele)
