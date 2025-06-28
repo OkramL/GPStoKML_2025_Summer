@@ -6,10 +6,7 @@ import org.w3c.dom.Element;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
@@ -126,7 +123,6 @@ public class KmlGenerator {
                 }
             }
 
-
             // Write a document to a file with special settings
             String outputFilePath = settings.getFileMap(); // Specifies the location and name of the file to be saved.
             TransformerFactory transformerFactory = TransformerFactory.newInstance(); // This is the first step in converting an XML object from the DOM to real output.
@@ -141,6 +137,87 @@ public class KmlGenerator {
             // System.out.println("KML file written to " + outputFilePath); // The user is given feedback on where the file was saved.
 
         } catch (ParserConfigurationException | TransformerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void speed() {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.newDocument();
+
+            // KML root
+            Element kml = doc.createElement("kml");
+            kml.setAttribute("xmlns", "http://www.opengis.net/kml/2.2");
+            doc.appendChild(kml);
+
+            // Document block
+            Element documentElement = doc.createElement("Document");
+            kml.appendChild(documentElement);
+
+            // Name and description
+            Element nameElement = doc.createElement("name");
+            nameElement.setTextContent("GPS to KML Speed (May 2025)");
+            documentElement.appendChild(nameElement);
+
+            Element descriptionElement = doc.createElement("description");
+            descriptionElement.setTextContent("This KML shows only the segments where speed is at least " + settings.getSpeedMap() + " km/h.");
+            documentElement.appendChild(descriptionElement);
+
+            // Add all style definitions
+            String iconFolder = (settings.isKmzFile() ? "../" : "") + "files/"; // files/image.png or ../files/image.png
+            //addLineStyle(doc, documentElement, LINE_STYLE_ROAD, settings.rgbToKmlHex(settings.getColorRoad(), 100), settings.getLineWidth(), false);
+            //addLineStyle(doc, documentElement, LINE_STYLE_DISRUPTED, settings.rgbToKmlHex(settings.getColorDisrupted(), 100), settings.getLineWidth(), false);
+            addLineStyle(doc, documentElement, LINE_STYLE_SPEED, settings.rgbToKmlHex(settings.getColorSpeed(), 100), settings.getLineWidth(), false);
+            addIconStyle(doc, documentElement, ICON_STYLE_START, iconFolder + model.getIconStart(), settings.rgbToKmlHex(settings.getColorStart(), 100), 1.5);
+            addIconStyle(doc, documentElement, ICON_STYLE_END, iconFolder + model.getIconEnd(), settings.rgbToKmlHex(settings.getColorEnd(), 100), 1.5);
+            //addIconStyle(doc, documentElement, ICON_STYLE_PARKING, iconFolder + model.getIconParking(), settings.rgbToKmlHex(settings.getColorParking(), 100), 1.5);
+            //addIconStyle(doc, documentElement, ICON_STYLE_DIRECTION, iconFolder + model.getIconDirection(), "ffffffff", settings.getDirectionScale());
+            addIconStyle(doc, documentElement, ICON_STYLE_SPEED_START, iconFolder + model.getIconStart(), settings.rgbToKmlHex(settings.getColorSpeedStart(), 100), settings.getDirectionScale());
+            addIconStyle(doc, documentElement, ICON_STYLE_SPEED_END,iconFolder + model.getIconEnd(), settings.rgbToKmlHex(settings.getColorSpeedEnd(), 100), settings.getDirectionScale());
+            addIconStyle(doc, documentElement, ICON_STYLE_SPEED_DIRECTION, iconFolder + model.getIconDirection(), settings.rgbToKmlHex(settings.getColorSpeedDirection(), 100), settings.getDirectionScale());
+
+            // Group and process data by month and day
+            Set<String> uniqueMonths = getUniqueMonths(model.getDataPoints());
+            for (String month : uniqueMonths) {
+                Element monthFolder = doc.createElement("Folder");
+                documentElement.appendChild(monthFolder);
+
+                Element monthName = doc.createElement("name");
+                monthName.setTextContent(month);
+                monthFolder.appendChild(monthName);
+
+                Map<String, List<DataPoint>> groupedByDay = groupDataPointsByDay(month, model.getDataPoints());
+                for (Map.Entry<String, List<DataPoint>> entry : groupedByDay.entrySet()) {
+                    Element dayFolder = doc.createElement("Folder");
+                    monthFolder.appendChild(dayFolder);
+
+                    Element dayName = doc.createElement("name");
+                    if (settings.isFileMerge()) {
+                        dayName.setTextContent(entry.getKey());
+                    } else {
+                        dayName.setTextContent(entry.getValue().getFirst().getDayName());
+                    }
+                    dayFolder.appendChild(dayName);
+
+                    drawSpeedLinesByDay(doc, dayFolder, entry.getValue());
+                }
+            }
+
+            // Save KML to file
+            String outputFilePath = settings.getFileSpeed();
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(new File(outputFilePath));
+            transformer.transform(source, result);
+
+            //System.out.println("Speed KML file written to " + outputFilePath);
+        } catch (TransformerException | ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
     }
@@ -323,6 +400,101 @@ public class KmlGenerator {
     }
 
     /**
+     * Creates a KML Placemark element with an icon and style based on the provided parameters.
+     *
+     * @param doc      The KML document.
+     * @param lat      Latitude coordinate.
+     * @param lon      Longitude coordinate.
+     * @param nameText The name of the placemark.
+     * @param styleId  The style ID to use for the icon.
+     * @return The created Placemark element.
+     */
+    private Element createIconPlacemark(Document doc, double lat, double lon, String nameText, String styleId) {
+        Element placemark = doc.createElement("Placemark");
+
+        Element name = doc.createElement("name");
+        name.setTextContent(nameText);
+        placemark.appendChild(name);
+
+        applyVisibility(placemark);
+
+        Element styleUrl = doc.createElement("styleUrl");
+        styleUrl.setTextContent("#" + styleId);
+        placemark.appendChild(styleUrl);
+
+        Element point = doc.createElement("Point");
+        placemark.appendChild(point);
+
+        Element coordinates = doc.createElement("coordinates");
+        coordinates.setTextContent(lon + "," + lat);
+        point.appendChild(coordinates);
+
+        return placemark;
+    }
+
+    /**
+     * Creates a KML Placemark with a directional heading arrow at the specified point.
+     *
+     * @param doc     The KML document.
+     * @param point   The coordinate point where the arrow is placed.
+     * @param heading The compass heading angle in degrees.
+     * @return The created Placemark element.
+     */
+    private Element createDirectionMarker(Document doc, CoordinatePoint point, double heading) {
+        Element placemark = doc.createElement("Placemark");
+
+        // Nimi
+        Element name = doc.createElement("name");
+        name.setTextContent("Speed Direction");
+        placemark.appendChild(name);
+
+        applyVisibility(placemark);
+
+        // Inline Style (kasutame heading'ut, seega ei tohi kasutada styleUrl)
+        Element style = doc.createElement("Style");
+        placemark.appendChild(style);
+
+        Element iconStyle = doc.createElement("IconStyle");
+        style.appendChild(iconStyle);
+
+        // Heading
+        Element headingElement = doc.createElement("heading");
+        headingElement.setTextContent(String.format(Locale.US, "%.1f", heading));
+        iconStyle.appendChild(headingElement);
+
+        // Ikooni asukoht
+        Element icon = doc.createElement("Icon");
+        iconStyle.appendChild(icon);
+
+        Element href = doc.createElement("href");
+        String iconFolder = (settings.isKmzFile() ? "../" : "") + "files/";
+        href.setTextContent(iconFolder + model.getIconDirection());
+        icon.appendChild(href);
+
+        // (Soovi korral lisa ka scale ja hotSpot)
+        Element scale = doc.createElement("scale");
+        scale.setTextContent("1.0");
+        iconStyle.appendChild(scale);
+
+        Element hotSpot = doc.createElement("hotSpot");
+        hotSpot.setAttribute("x", "0.5");
+        hotSpot.setAttribute("y", "0.5");
+        hotSpot.setAttribute("xunits", "fraction");
+        hotSpot.setAttribute("yunits", "fraction");
+        iconStyle.appendChild(hotSpot);
+
+        // Koordinaadid
+        Element pointElement = doc.createElement("Point");
+        placemark.appendChild(pointElement);
+
+        Element coordinates = doc.createElement("coordinates");
+        coordinates.setTextContent(point.longitude() + "," + point.latitude());
+        pointElement.appendChild(coordinates);
+
+        return placemark;
+    }
+
+    /**
      * Adds a placemark representing a disrupted segment (e.g., GPS signal lost or unrealistic jump).
      *
      * @param doc        The KML document being constructed.
@@ -462,7 +634,8 @@ public class KmlGenerator {
         iconStyle.appendChild(icon);
 
         Element href = doc.createElement("href");
-        href.setTextContent(model.getIconDirection());
+        String iconFolder = (settings.isKmzFile() ? "../" : "") + "files/"; // files/image.png or ../files/image.png
+        href.setTextContent(iconFolder + model.getIconDirection());
         icon.appendChild(href);
 
         Element scale = doc.createElement("scale");
@@ -617,6 +790,121 @@ public class KmlGenerator {
                 addKmPlaceMark(doc, kmFolder, post);
             }
         }
+    }
+
+    /**
+     * Draws speed lines for a single day based on the provided data points.
+     * Adds optional start, end, and direction icons for each speed segment if enabled in settings.
+     *
+     * @param doc        The KML document.
+     * @param dayFolder  The parent folder element representing the day.
+     * @param dataPoints The list of data points for the day.
+     */
+    private void drawSpeedLinesByDay(Document doc, Element dayFolder, List<DataPoint> dataPoints) {
+        if (dataPoints == null || dataPoints.isEmpty()) return;
+
+        List<CoordinatePoint> currentSegmentPoints = new ArrayList<>();
+        List<Segment> segments = new ArrayList<>();
+
+        for (int i = 1; i < dataPoints.size(); i++) {
+            DataPoint prev = dataPoints.get(i - 1);
+            DataPoint curr = dataPoints.get(i);
+
+            if (prev.getSpeed() >= settings.getSpeedMap() && curr.getSpeed() >= settings.getSpeedMap()) {
+                currentSegmentPoints.add(new CoordinatePoint(prev.getLongitude(), prev.getLatitude(), prev.getPointTime()));
+                if (i == dataPoints.size() - 1) {
+                    currentSegmentPoints.add(new CoordinatePoint(curr.getLongitude(), curr.getLatitude(), curr.getPointTime()));
+                    segments.add(new Segment(new ArrayList<>(currentSegmentPoints), "Speed Line", LINE_STYLE_SPEED));
+                }
+            } else {
+                if (!currentSegmentPoints.isEmpty()) {
+                    currentSegmentPoints.add(new CoordinatePoint(prev.getLongitude(), prev.getLatitude(), prev.getPointTime()));
+                    segments.add(new Segment(new ArrayList<>(currentSegmentPoints), "Speed Line", LINE_STYLE_SPEED));
+                    currentSegmentPoints.clear();
+                }
+            }
+        }
+
+        // Valmistame ette vajadusel markerite kausta
+        Element speedMarkerFolder = null;
+        if (settings.isKmSign()) {
+            speedMarkerFolder = doc.createElement("Folder");
+
+            Element folderName = doc.createElement("name");
+            folderName.setTextContent("Speed Markers");
+            speedMarkerFolder.appendChild(folderName);
+
+            applyVisibility(speedMarkerFolder);
+        }
+
+        // Lisa jooned päevakausta
+        for (Segment segment : segments) {
+            List<CoordinatePoint> points = segment.getPoints();
+            if (points.size() < 2) continue;
+
+            double segmentLength = 0.0;
+            for (int j = 1; j < points.size(); j++) {
+                CoordinatePoint p1 = points.get(j - 1);
+                CoordinatePoint p2 = points.get(j);
+                segmentLength += calculateDistance(p1.latitude(), p1.longitude(), p2.latitude(), p2.longitude());
+            }
+
+            createLinePlaceMark(doc, dayFolder, "Speed Line", segment);
+
+            // Lisa ikoonid eraldi kausta ainult kui piisavalt pikk
+            if (settings.isKmSign() && segmentLength >= 0.01 && speedMarkerFolder != null) {
+                applyVisibilityToSpeedSegmentIcons(doc, speedMarkerFolder, points);
+            }
+        }
+
+        // Lisa ikoonikaust päevakausta kõige lõpus
+        if (speedMarkerFolder != null && speedMarkerFolder.hasChildNodes()) {
+            dayFolder.appendChild(speedMarkerFolder);
+        }
+    }
+
+    /**
+     * Adds a visibility tag to a KML element based on user settings.
+     *
+     * @param target The KML element (Placemark or Folder) to which visibility is added.
+     */
+    private void applyVisibility(Element target) {
+        Document doc = target.getOwnerDocument();
+        Element visibility = doc.createElement("visibility");
+        visibility.setTextContent(settings.isKmSignVisibility() ? "1" : "0");
+        target.appendChild(visibility);
+    }
+
+    /**
+     * Adds start, end, and direction icons to the given folder for a speed segment.
+     * Visibility is applied according to user settings.
+     *
+     * @param doc          The KML document.
+     * @param parentFolder The folder to which the placemarks will be added.
+     * @param points       The list of coordinate points representing the segment.
+     */
+    private void applyVisibilityToSpeedSegmentIcons(Document doc, Element parentFolder, List<CoordinatePoint> points) {
+        if (!settings.isKmSign()) return;
+        if (points.size() < 2) return;
+
+        CoordinatePoint start = points.getFirst();
+        CoordinatePoint end = points.getLast();
+
+        // Start icon
+        Element startPlacemark = createIconPlacemark(doc, start.latitude(), start.longitude(), "Speed Start", ICON_STYLE_SPEED_START);
+        applyVisibility(startPlacemark);
+        parentFolder.appendChild(startPlacemark);
+
+        // End icon
+        Element endPlacemark = createIconPlacemark(doc, end.latitude(), end.longitude(), "Speed End", ICON_STYLE_SPEED_END);
+        applyVisibility(endPlacemark);
+        parentFolder.appendChild(endPlacemark);
+
+        // Direction icon
+        double heading = bearingInDegrees(start, points.get(1));
+        Element directionPlacemark = createDirectionMarker(doc, start, heading);
+        applyVisibility(directionPlacemark);
+        parentFolder.appendChild(directionPlacemark);
     }
 
     /**

@@ -24,7 +24,7 @@ public class Model {
     private final DateTimeFormatter dateTimeEstonia = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     private final DateTimeFormatter dateWithSlash = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SS");
 
-    public Model(Settings settings) {
+    public Model(Settings settings) throws IOException {
         this.settings = settings;
         setValidFiles(); // Reads files requested by the user (example *.txt)
         displayInfo(); // Show current information on the console
@@ -41,6 +41,12 @@ public class Model {
 
                 switch (settings.getTypeMap()) {
                     case "map" -> new KmlGenerator(settings, this).build();
+                    case "speed" -> new KmlGenerator(settings, this).speed();
+                    case "both" -> {
+                        new KmlGenerator(settings, this).build();
+                        new KmlGenerator(settings, this).speed();
+                    }
+                    case "settings" -> new SettingsExample().generateSettings("settings.example.ini");
                 }
 
                 if(!settings.isKmzFile()) { // Kui on KML failid, siis tee kaust files koos ikoonidega
@@ -132,6 +138,8 @@ public class Model {
                         String[] parts = line.split(",");
                         switch(settings.getTypeFile()) {
                             case ".txt" -> parseTxtLine(parts, date, explanation, description);
+                            case ".csv" -> parseCsvLine(parts, date, explanation, description);
+                            case ".0805", ".hero8", ".canyon" -> parseCameraLine(parts, date, explanation, description); // TODO SPEED ja see ja eelmine
                         }
                     }
                 } catch (IOException e) {
@@ -237,6 +245,68 @@ public class Model {
         }
     }
 
+    /**
+     * The necessary information is read from the row of the CSV file and written as a data point
+     * CSV file line (CanWay export)
+     * 1,2020/08/13,04:59:34.00,2020/08/13,07:59:34.00,58.612821,N,24.508767,E,18.4,0.0
+     * .csv datetime is UTC (parts[1] and parts[2]) and LocalDateTime (parts[3] and parts[4])
+     *
+     * @param parts       a line of a split file
+     * @param date        date form filename
+     * @param explanation an explanation of the filename between two _ (2023-05-31_explanation_description-no-spaces)
+     * @param description a description of the filename
+     *
+     */
+    private void parseCsvLine(String[] parts, String date, String explanation, String description) {
+        if(Double.parseDouble(parts[10]) >= settings.getSpeedGps()) {
+            String datetime = parts[1] + " " + parts[2]; // 3 and 4 is Estonian&Tallinn, 1 and 2 is UTC
+            ZonedDateTime myTime = ZonedDateTime.parse(datetime, dateWithSlash.withZone(ZoneId.of("UTC")));
+
+            double latitude = Double.parseDouble(parts[5]);
+            double longitude = Double.parseDouble(parts[7]);
+            double speed = Double.parseDouble(parts[10]); // this is kmh
+
+            dataPoints.add(new DataPoint(latitude, longitude, myTime, date, speed, explanation, description, setDayName(date, description)));
+        }
+    }
+
+    /**
+     * The necessary information is read from the line of the file and written as a data point. The file was made with
+     * the EXIF tool. This is not standard file content.
+     * File line: date time,latitude,longitude,speed km/h (.0805) and .hero8 is m/s
+     * 2023:06:13 16:17:26Z,58.6133423333333,24.5081206666667,0 <- .0805
+     * 2023:06:11 17:54:37.215,58.6112888,24.4942199,4.867 <- .hero
+     * .canyon, .hero8 datetime is UTC
+     * .0805 time is LocalDateTime
+     *
+     * @param parts       a line of a split file
+     * @param date        date form filename
+     * @param explanation an explanation of the filename between two _ (2023-05-31_explanation_description-no-spaces)
+     * @param description a description of the filename
+     *
+     */
+    private void parseCameraLine(String[] parts, String date, String explanation, String description) {
+        String d = parts[0].split(" ")[0];
+        String t = parts[0].split(" ")[1].substring(0, 8);
+        d = d.replace(":", "-");
+        String datetime = String.format("%s %s", d, t);
+
+        if(isDateTimeValid(datetime)) {
+            ZonedDateTime myTime = ZonedDateTime.parse(datetime, dateWithMinus.withZone(ZoneId.of("UTC")));
+            // TODO The dates are in different formats .canyon and .hero8 and .0805 is separate?
+            double latitude = Double.parseDouble(parts[1]);
+            double longitude = Double.parseDouble(parts[2]);
+            double speed;
+
+            if(settings.getTypeFile().equals(".hero8")) {
+                speed = Double.parseDouble(parts[3]) * 3.6; // ms -> kmh
+            } else {
+                speed = Double.parseDouble(parts[3]); // kmh
+            }
+
+            dataPoints.add(new DataPoint(latitude, longitude, myTime, date, speed, explanation, description, setDayName(date, description)));
+        }
+    }
     /**
      * Validates whether a string matches the expected datetime format "yyyy-MM-dd HH:mm:ss".
      *

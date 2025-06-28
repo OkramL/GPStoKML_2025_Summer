@@ -46,8 +46,8 @@ public class Settings {
     private Color DEFAULT_COLOR_END = new Color(255,165,0);
     private Color DEFAULT_COLOR_DISRUPTED = new Color(255,0,0);
     private Color DEFAULT_COLOR_PARKING = new Color(255,255,255);
-    private Color DEFAULT_COLOR_SPEED_START = new Color(35,139,35);
-    private Color DEFAULT_COLOR_SPEED_END = new Color(220,20,60);
+    private Color DEFAULT_COLOR_SPEED_START = new Color(15, 225, 190);
+    private Color DEFAULT_COLOR_SPEED_END = new Color(128, 0, 255);
     private Color DEFAULT_COLOR_SPEED_DIRECTION = new Color(255,255,255);
 
     // boolean
