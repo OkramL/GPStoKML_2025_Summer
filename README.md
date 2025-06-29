@@ -130,3 +130,44 @@ Vaikimis näeb kohe sõidus olnud parkimisi, kui neid on, kuid seal on ka algus 
 
 Sõidu algus ja lõpp ning sõidu suund on ka näidatud. Klikkides ikoon saab lisa infot. Seda ei näe speed kaardil (1.0.62).
 
+# Esmane kasutus (enne loe, ja siis tee)
+
+1. Lae alla First Public Release [GPStoKML_2025_Summer-1.0.63.jar](https://github.com/OkramL/GPStoKML_2025_Summer/releases/tag/1.0.63)
+2. Tee uus kaust ja kopeeri/tõsta allalaetud fail tehtud kausta
+3. Ava käsurida või Powerhsell Terminal samas kaustas
+4. Kirjuta käsureale käsklus ```java -jar GPStoKML_2025_Summer-1.0.63.jar``` või ```java -jar .\GPStoKML_2025_Summer-1.0.63.jar```
+5. Järgnevalt näed midagi järgmist: 
+```
+Build Version: 1.0.63
+No settings file (settings.ini) found. Using default settings.
+Sample settings file settings.ini has been created.
+Folder does not exist: data_files. Interrupting...
+```
+6. Selle tulemusena loodi siia samasse ```settings.ini``` fail. Ava see fail ja vaata sisu üle. Seaded on dokumenteeritud.
+7. Järgnevaks tee olemasolevasse kausta alamkaust ```data_files```, juhul kui seda seadetes ```default_folder=data_files``` pole muutnud.
+8. Nüüd kopeeri vajalikud logifailid kausta ```data_files```. **NB!** Failinimed peavad algama kuupäevaga kujul **AAAA-KK-PP**
+9. Käivita rakendus uuesti nagu punktis 4. Kui midagi valesti ei läinud, peaks nägema midagi sellist:
+```
+Build Version: 1.0.63
+Current Settings:
+File Type:           .txt
+Folder (Full Path):  C:\Users\Marko\Desktop\GpsToKml_2025_Summer\data_files
+Map Type:            map
+Total Files:         8
+Created file CameraKmz.kmz
+```
+
+# Logifailide nimed
+
+Selleks, et kogu rakendus toimiks on eeldatud et failid mida töödeldakse algaks kuupäevaga. See võib sisaldada 
+selgitust ja kirjeldus. Failinimi ei tohi sisaldada tühikuid. Kuupäev on kujul AAAA-KK-PP, AASTA-KUU-PÄEV
+
+Failinime süntaks: ```date_explanation_description-description-description```
+Näide: ```2025-01-31_broken_Pärnu-Tallinn-Tartu-Narva```
+
+Failinime süntaks: ```date_explanation_```
+Näide: ```2025-02-28_unknown_```
+
+Failinime süntaks: ```date_description-description```
+Näide: ```2025-05-31_Tallinn``` või ```2025-06-01_Pärnu-Haapsalu```
+
