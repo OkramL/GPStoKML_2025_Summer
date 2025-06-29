@@ -27,9 +27,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Model {
-    private Settings settings;
-    private List<File> files = new ArrayList<>();
-    private List<DataPoint> dataPoints = new ArrayList<>();
+    private final Settings settings;
+    private final List<File> files = new ArrayList<>();
+    private final List<DataPoint> dataPoints = new ArrayList<>();
 
     // Different datetime formatters
     private final DateTimeFormatter dateWithMinus = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -61,7 +61,7 @@ public class Model {
                     case "settings" -> new SettingsExample().generateSettings("settings.example.ini");
                 }
 
-                if(!settings.isKmzFile()) { // Kui on KML failid, siis tee kaust files koos ikoonidega
+                if(!settings.isKmzFile()) { // If there are KML files, create a folder files with the icons
                     copyIconsToFolder();
                 } else { // Create KMZ file
                     new KmzGenerator(settings, this, viewParameters);
@@ -89,7 +89,7 @@ public class Model {
             System.exit(1);
         }
 
-        // Define regex pattern for data-prifixed filenames
+        // Define regex pattern for data-prefixed filenames
         // This means file names 2024-01-31.txt or 2024-12-31_Tallinn-Pärnu-Tallinn.txt
         String datePattern = "^\\d{4}-\\d{2}-\\d{2}.*" + Pattern.quote(settings.getTypeFile()) + "$";
 
@@ -271,7 +271,7 @@ public class Model {
      */
     private void parseCsvLine(String[] parts, String date, String explanation, String description) {
         if(Double.parseDouble(parts[10]) >= settings.getSpeedGps()) {
-            String datetime = parts[1] + " " + parts[2]; // 3 and 4 is Estonian&Tallinn, 1 and 2 is UTC
+            String datetime = parts[1] + " " + parts[2]; // 3 and 4 is Estonian/Tallinn, 1 and 2 is UTC
             ZonedDateTime myTime = ZonedDateTime.parse(datetime, dateWithSlash.withZone(ZoneId.of("UTC")));
 
             double latitude = Double.parseDouble(parts[5]);
@@ -572,7 +572,7 @@ public class Model {
      */
     private void copyIconsToFolder() {
         String[] icons = {getIconStart(), getIconEnd(), getIconParking(), getIconDirection()};
-        // Määra väljundkaust (võid muuta vastavalt vajadusele)
+        // Set the output folder (you can change it as needed)
         Path targetDir = Paths.get("files");
         try {
             Files.createDirectories(targetDir);
@@ -583,7 +583,7 @@ public class Model {
         for (String icon : icons) {
             Path target = targetDir.resolve(icon);
             if (Files.exists(target)) {
-                // Ikka juba olemas, vahele jätta
+                // Already exists, skip
                 continue;
             }
 

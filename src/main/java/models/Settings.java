@@ -12,53 +12,52 @@ import java.util.*;
 
 public class Settings {
     // Work folder
-    private String sourcePath = System.getProperty("user.dir");
+    private final String sourcePath = System.getProperty("user.dir");
     // Settings file name
-    private String SETTINGS_FILE = "settings.ini";
+    private final String SETTINGS_FILE = "settings.ini";
 
     // Accepted file extensions and map types
-    private Set<String> ALLOWED_FILE_TYPES = new HashSet<>(Arrays.asList(".txt", ".csv", ".0805", ".hero8", ".canyon", ".gpx", ".kml", ".log")); // .log not supported
-    private Set<String> ALLOWED_MAP_TYPES = new HashSet<>(Arrays.asList("map", "speed", "both", "settings"));
+    private final Set<String> ALLOWED_FILE_TYPES = new HashSet<>(Arrays.asList(".txt", ".csv", ".0805", ".hero8", ".canyon", ".gpx", ".kml", ".log")); // .log not supported
+    private final Set<String> ALLOWED_MAP_TYPES = new HashSet<>(Arrays.asList("map", "speed", "both", "settings"));
 
     // String. Default settings if there is something wrong in the settings.ini file
-    private String DEFAULT_FOLDER = "data_files"; // Default location of GPS files
-    private String DEFAULT_TYPE_FILE = ".txt";  // Default file type
-    private String DEFAULT_TYPE_MAP = "map";    // Default type of generated KML file
-    private String DEFAULT_FILE_MAP = "CameraMap.kml";  // Default map file name
-    private String DEFAULT_FILE_SPEED = "CameraSpeed.kml"; // Default speed file name
-    private String DEFAULT_FILE_KMZ = "CameraKmz.kmz"; // Default .kmz file name
+    private final String DEFAULT_FOLDER = "data_files"; // Default location of GPS files
+    private final String DEFAULT_TYPE_FILE = ".txt";  // Default file type
+    private final String DEFAULT_TYPE_MAP = "map";    // Default type of generated KML file
+    private final String DEFAULT_FILE_MAP = "CameraMap.kml";  // Default map file name
+    private final String DEFAULT_FILE_SPEED = "CameraSpeed.kml"; // Default speed file name
+    private final String DEFAULT_FILE_KMZ = "CameraKmz.kmz"; // Default .kmz file name
 
     // int
-    private int DEFAULT_LINE_WIDTH = 3; // Default line width
-    private int DEFAULT_STOP_MINUTES = 5; // Default parking time in minutes
+    private final int DEFAULT_LINE_WIDTH = 3; // Default line width
+    private final int DEFAULT_STOP_MINUTES = 5; // Default parking time in minutes
 
     // double
-    private double DEFAULT_SPEED_MAP = 90.0; // Default speed or minimum value for speed map
-    private double DEFAULT_KM_STEPS = 10.0; // Default kilometer marker interval. 0.2 is 200 meters
-    private double DEFAULT_SPEED_GPS = 5.0; // Default GPS speed
-    private double DEFAULT_MAX_DISTANCE = 2.0; // Default maximum distance for invalid (disrupted) drive
-    private double DEFAULT_DIRECTION_SCALE = 1.0; // Default direction icon size
+    private final double DEFAULT_SPEED_MAP = 90.0; // Default speed or minimum value for speed map
+    private final double DEFAULT_KM_STEPS = 10.0; // Default kilometer marker interval. 0.2 is 200 meters
+    private final double DEFAULT_SPEED_GPS = 5.0; // Default GPS speed
+    private final double DEFAULT_MAX_DISTANCE = 2.0; // Default maximum distance for invalid (disrupted) drive
+    private final double DEFAULT_DIRECTION_SCALE = 1.0; // Default direction icon size
 
     // Color
-    private Color DEFAULT_COLOR_ROAD = new Color(0,0,255);
-    private Color DEFAULT_COLOR_SPEED =  new Color(255,0,0);
-    private Color DEFAULT_COLOR_START = new Color(0,255,75);
-    private Color DEFAULT_COLOR_END = new Color(255,165,0);
-    private Color DEFAULT_COLOR_DISRUPTED = new Color(255,0,0);
-    private Color DEFAULT_COLOR_PARKING = new Color(255,255,255);
-    private Color DEFAULT_COLOR_SPEED_START = new Color(15, 225, 190);
-    private Color DEFAULT_COLOR_SPEED_END = new Color(128, 0, 255);
-    private Color DEFAULT_COLOR_SPEED_DIRECTION = new Color(255,255,255);
+    private final Color DEFAULT_COLOR_ROAD = new Color(0,0,255);
+    private final Color DEFAULT_COLOR_SPEED =  new Color(255,0,0);
+    private final Color DEFAULT_COLOR_START = new Color(0,255,75);
+    private final Color DEFAULT_COLOR_END = new Color(255,165,0);
+    private final Color DEFAULT_COLOR_DISRUPTED = new Color(255,0,0);
+    private final Color DEFAULT_COLOR_PARKING = new Color(255,255,255);
+    private final Color DEFAULT_COLOR_SPEED_START = new Color(15, 225, 190);
+    private final Color DEFAULT_COLOR_SPEED_END = new Color(128, 0, 255);
+    private final Color DEFAULT_COLOR_SPEED_DIRECTION = new Color(255,255,255);
 
     // boolean
-    private boolean DEFAULT_OLD_CAMERA = true;
-    private boolean DEFAULT_FILE_MERGE = false; // Files with the same date are merged into a single file
-    private boolean DEFAULT_KM_SIGN = false;
-    private boolean DEFAULT_KM_SIGN_VISIBILITY = false;
-    private boolean DEFAULT_KMZ_FILE = false;
+    private final boolean DEFAULT_OLD_CAMERA = true;
+    private final boolean DEFAULT_FILE_MERGE = false; // Files with the same date are merged into a single file
+    private final boolean DEFAULT_KM_SIGN = false;
+    private final boolean DEFAULT_KM_SIGN_VISIBILITY = false;
 
     // Other
-    private TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("UTC");
+    private final TimeZone DEFAULT_TIME_ZONE = TimeZone.getTimeZone("UTC");
 
     // SETTINGS
     private String defaultFolder;
@@ -130,7 +129,7 @@ public class Settings {
             FileHandler fileHandler = new FileHandler(config);
             fileHandler.load(new File(SETTINGS_FILE));
 
-            // Laeme seaded failist
+            // Load settings from a file
             this.defaultFolder = config.getSection("File").getString("default_folder", DEFAULT_FOLDER);
             this.fileMap = config.getSection("File").getString("file_map", DEFAULT_FILE_MAP);
             this.fileSpeed = config.getSection("File").getString("file_speed", DEFAULT_FILE_SPEED);
@@ -152,6 +151,7 @@ public class Settings {
             this.fileMerge = parseBoolean(config.getSection("Boolean").getString("file_merge"), DEFAULT_FILE_MERGE, "file_merge");
             this.kmSign = parseBoolean(config.getSection("Boolean").getString("km_sign"), DEFAULT_KM_SIGN, "km_sign");
             this.kmSignVisibility = parseBoolean(config.getSection("Boolean").getString("km_sign_visibility"), DEFAULT_KM_SIGN_VISIBILITY, "km_sign_visibility");
+            boolean DEFAULT_KMZ_FILE = false;
             this.kmzFile = parseBoolean(config.getSection("Boolean").getString("kmz_file"), DEFAULT_KMZ_FILE, "kmz_file");
 
             this.colorRoad = parseColor(config.getSection("Color").getString("color_road"), DEFAULT_COLOR_ROAD, "color_road");

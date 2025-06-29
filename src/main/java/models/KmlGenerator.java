@@ -27,19 +27,16 @@ import java.util.stream.Collectors;
  * (e.g., road map, speed map, disrupted paths).
  */
 public class KmlGenerator {
-    private String LINE_STYLE_ROAD = "lineStyleRoad";
-    private String LINE_STYLE_SPEED = "lineStyleSpeed";
-    private String LINE_STYLE_DISRUPTED = "lineStyleDisrupted";
-    private String ICON_STYLE_START = "iconStyleStart";
-    private String ICON_STYLE_END = "iconStyleEnd";
-    private String ICON_STYLE_PARKING = "iconStyleParking";
-    private String ICON_STYLE_DIRECTION = "iconStyleDirection";
-    private String ICON_STYLE_SPEED_START = "iconStyleSpeedStart";
-    private String ICON_STYLE_SPEED_END = "iconStyleSpeedEnd";
-    private String ICON_STYLE_SPEED_DIRECTION = "iconStyleSpeedDirection";
+    private final String LINE_STYLE_SPEED = "lineStyleSpeed";
+    private final String LINE_STYLE_DISRUPTED = "lineStyleDisrupted";
+    private final String ICON_STYLE_START = "iconStyleStart";
+    private final String ICON_STYLE_END = "iconStyleEnd";
+    private final String ICON_STYLE_PARKING = "iconStyleParking";
+    private final String ICON_STYLE_SPEED_START = "iconStyleSpeedStart";
+    private final String ICON_STYLE_SPEED_END = "iconStyleSpeedEnd";
 
-    private Settings settings;
-    private Model model;
+    private final Settings settings;
+    private final Model model;
 
     /**
      * Constructs a new {@code KmlGenerator} with the specified settings and data model.
@@ -83,11 +80,13 @@ public class KmlGenerator {
 
             // Create line and icon styles
             String iconFolder = (settings.isKmzFile() ? "../" : "") + "files/"; // files/image.png or ../files/image.png
-            addLineStyle(doc, documentElement, LINE_STYLE_ROAD, settings.rgbToKmlHex(settings.getColorRoad(), 100), settings.getLineWidth(), false);
-            addLineStyle(doc, documentElement, LINE_STYLE_DISRUPTED, settings.rgbToKmlHex(settings.getColorDisrupted(), 100), settings.getLineWidth(), false);
+            String LINE_STYLE_ROAD = "lineStyleRoad";
+            addLineStyle(doc, documentElement, LINE_STYLE_ROAD, settings.rgbToKmlHex(settings.getColorRoad(), 100), settings.getLineWidth());
+            addLineStyle(doc, documentElement, LINE_STYLE_DISRUPTED, settings.rgbToKmlHex(settings.getColorDisrupted(), 100), settings.getLineWidth());
             addIconStyle(doc, documentElement, ICON_STYLE_START, iconFolder + model.getIconStart(), settings.rgbToKmlHex(settings.getColorStart(), 100), 1.5);
             addIconStyle(doc, documentElement, ICON_STYLE_END, iconFolder + model.getIconEnd(), settings.rgbToKmlHex(settings.getColorEnd(), 100), 1.5);
             addIconStyle(doc, documentElement, ICON_STYLE_PARKING, iconFolder + model.getIconParking(), settings.rgbToKmlHex(settings.getColorParking(), 100), 1.5);
+            String ICON_STYLE_DIRECTION = "iconStyleDirection";
             addIconStyle(doc, documentElement, ICON_STYLE_DIRECTION, iconFolder + model.getIconDirection(), settings.rgbToKmlHex(settings.getColorSpeedDirection(), 100), settings.getDirectionScale());
 
             // This is where the line-related stuff starts, including making folders.
@@ -141,6 +140,22 @@ public class KmlGenerator {
         }
     }
 
+    /**
+     * Generates a KML file that highlights segments where the speed meets or exceeds the defined threshold.
+     * <p>
+     * For each day, segments with sufficient speed are grouped and drawn as "Speed Lines".
+     * If enabled in settings, the start, end, and direction icons are also added to a separate
+     * "Speed Markers" folder, which is appended at the end of each day’s folder.
+     * <p>
+     * Icon visibility is controlled via user settings:
+     * <ul>
+     *   <li>{@code isKmSign()} determines whether icons are created.</li>
+     *   <li>{@code isKmSignVisibility()} controls whether icons are shown by default.</li>
+     * </ul>
+     *
+     * Icon appearance (color and scale) is also configured via user settings.
+     * The output file path is defined by {@code settings.getFileSpeed()}.
+     */
     public void speed() {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -167,15 +182,12 @@ public class KmlGenerator {
 
             // Add all style definitions
             String iconFolder = (settings.isKmzFile() ? "../" : "") + "files/"; // files/image.png or ../files/image.png
-            //addLineStyle(doc, documentElement, LINE_STYLE_ROAD, settings.rgbToKmlHex(settings.getColorRoad(), 100), settings.getLineWidth(), false);
-            //addLineStyle(doc, documentElement, LINE_STYLE_DISRUPTED, settings.rgbToKmlHex(settings.getColorDisrupted(), 100), settings.getLineWidth(), false);
-            addLineStyle(doc, documentElement, LINE_STYLE_SPEED, settings.rgbToKmlHex(settings.getColorSpeed(), 100), settings.getLineWidth(), false);
+            addLineStyle(doc, documentElement, LINE_STYLE_SPEED, settings.rgbToKmlHex(settings.getColorSpeed(), 100), settings.getLineWidth());
             addIconStyle(doc, documentElement, ICON_STYLE_START, iconFolder + model.getIconStart(), settings.rgbToKmlHex(settings.getColorStart(), 100), 1.5);
             addIconStyle(doc, documentElement, ICON_STYLE_END, iconFolder + model.getIconEnd(), settings.rgbToKmlHex(settings.getColorEnd(), 100), 1.5);
-            //addIconStyle(doc, documentElement, ICON_STYLE_PARKING, iconFolder + model.getIconParking(), settings.rgbToKmlHex(settings.getColorParking(), 100), 1.5);
-            //addIconStyle(doc, documentElement, ICON_STYLE_DIRECTION, iconFolder + model.getIconDirection(), "ffffffff", settings.getDirectionScale());
             addIconStyle(doc, documentElement, ICON_STYLE_SPEED_START, iconFolder + model.getIconStart(), settings.rgbToKmlHex(settings.getColorSpeedStart(), 100), settings.getDirectionScale());
             addIconStyle(doc, documentElement, ICON_STYLE_SPEED_END,iconFolder + model.getIconEnd(), settings.rgbToKmlHex(settings.getColorSpeedEnd(), 100), settings.getDirectionScale());
+            String ICON_STYLE_SPEED_DIRECTION = "iconStyleSpeedDirection";
             addIconStyle(doc, documentElement, ICON_STYLE_SPEED_DIRECTION, iconFolder + model.getIconDirection(), settings.rgbToKmlHex(settings.getColorSpeedDirection(), 100), settings.getDirectionScale());
 
             // Group and process data by month and day
@@ -230,9 +242,8 @@ public class KmlGenerator {
      * @param id     The unique ID of the style.
      * @param color  The line color (in KML format AABBGGRR).
      * @param width  The line width in pixels.
-     * @param dashed If true, the line will be dashed.
      */
-    public void addLineStyle(Document doc, Element parent, String id, String color, double width, boolean dashed) {
+    public void addLineStyle(Document doc, Element parent, String id, String color, double width) {
         // Create a Style element
         Element style = doc.createElement("Style");
         style.setAttribute("id", id);
@@ -251,13 +262,6 @@ public class KmlGenerator {
         Element widthElement = doc.createElement("width");
         widthElement.setTextContent(String.valueOf(width));
         lineStyle.appendChild(widthElement);
-
-        // Add dashed pattern if required
-        if (dashed) {
-            Element dashStyle = doc.createElement("gx:physicalWidth");
-            dashStyle.setTextContent("10"); // Example dash length, can be adjusted
-            lineStyle.appendChild(dashStyle);
-        }
     }
 
     /**
@@ -380,7 +384,6 @@ public class KmlGenerator {
         placeMark.appendChild(description);
 
         Element styleUrl = doc.createElement("styleUrl");
-        // styleUrl.setTextContent(segment.getName().equals("Disrupted Line") ? "#" + LINE_STYLE_DISRUPTED : "#" + LINE_STYLE_ROAD);
         styleUrl.setTextContent("#" + segment.getStyleId());
         placeMark.appendChild(styleUrl);
 
@@ -395,8 +398,6 @@ public class KmlGenerator {
         }
         coordinates.setTextContent(coordBuilder.toString().trim());
         lineString.appendChild(coordinates);
-
-        // return placeMark;
     }
 
     /**
@@ -443,14 +444,14 @@ public class KmlGenerator {
     private Element createDirectionMarker(Document doc, CoordinatePoint point, double heading) {
         Element placemark = doc.createElement("Placemark");
 
-        // Nimi
+        // Name
         Element name = doc.createElement("name");
         name.setTextContent("Speed Direction");
         placemark.appendChild(name);
 
         applyVisibility(placemark);
 
-        // Inline Style (kasutame heading'ut, seega ei tohi kasutada styleUrl)
+        // Inline Style (we are using heading, so we cannot use styleUrl)
         Element style = doc.createElement("Style");
         placemark.appendChild(style);
 
@@ -471,9 +472,9 @@ public class KmlGenerator {
         href.setTextContent(iconFolder + model.getIconDirection());
         icon.appendChild(href);
 
-        // (Soovi korral lisa ka scale ja hotSpot)
+        // (Add scale and hotspot if desired)
         Element scale = doc.createElement("scale");
-        scale.setTextContent("1.0");
+        scale.setTextContent(String.valueOf(settings.getDirectionScale()));
         iconStyle.appendChild(scale);
 
         Element hotSpot = doc.createElement("hotSpot");
@@ -483,7 +484,7 @@ public class KmlGenerator {
         hotSpot.setAttribute("yunits", "fraction");
         iconStyle.appendChild(hotSpot);
 
-        // Koordinaadid
+        // Coordinates
         Element pointElement = doc.createElement("Point");
         placemark.appendChild(pointElement);
 
@@ -548,12 +549,12 @@ public class KmlGenerator {
         Element placeMark = doc.createElement("Placemark");
         parent.appendChild(placeMark);
 
-        // Nimi
+        // Name
         Element nameElement = doc.createElement("name");
         nameElement.setTextContent("Parking");
         placeMark.appendChild(nameElement);
 
-        // Kirjeldus
+        // Description
         String formattedDuration = calculateTime(startTime, endTime);
 
         String start = convertUtcToLocal(startTime);
@@ -566,12 +567,12 @@ public class KmlGenerator {
                 formattedDuration)));
         placeMark.appendChild(descriptionElement);
 
-        // Stiil
+        // Style
         Element styleUrl = doc.createElement("styleUrl");
         styleUrl.setTextContent("#" + ICON_STYLE_PARKING);
         placeMark.appendChild(styleUrl);
 
-        // Koordinaadid
+        // Coordinates
         Element pointElement = doc.createElement("Point");
         placeMark.appendChild(pointElement);
 
@@ -591,17 +592,17 @@ public class KmlGenerator {
         Element placeMark = doc.createElement("Placemark");
         parent.appendChild(placeMark);
 
-        // Nimi
+        // Name
         Element name = doc.createElement("name");
         name.setTextContent(String.format("%.2f", post.kmNumber()) + " km."); // Ümarda kaks kohta peale koma.
         placeMark.appendChild(name);
 
-        // Nähtavus
+        // Visibility
         Element visibility = doc.createElement("visibility");
         visibility.setTextContent(settings.isKmSignVisibility() ? "1" : "0");
         placeMark.appendChild(visibility);
 
-        // Kirjeldus
+        // Description
         ZoneId timeZoneId = settings.getTimeZone().toZoneId();
         ZonedDateTime localTime = post.dataPoint().getPointTime().withZoneSameInstant(timeZoneId);
         DateTimeFormatter formatter = model.getDateTimeEstonia();
@@ -615,7 +616,7 @@ public class KmlGenerator {
         )));
         placeMark.appendChild(description);
 
-        // Punkt
+        // Point
         Element point = doc.createElement("Point");
         placeMark.appendChild(point);
 
@@ -623,7 +624,7 @@ public class KmlGenerator {
         coordinates.setTextContent(post.dataPoint().getLongitude() + "," + post.dataPoint().getLatitude());
         point.appendChild(coordinates);
 
-        // Stiil
+        // Style
         Element style = doc.createElement("Style");
         placeMark.appendChild(style);
 
@@ -699,7 +700,7 @@ public class KmlGenerator {
         // Add start of day icon
         addIconPlaceMark(doc, dayFolder, dataPoints.getFirst(), ICON_STYLE_START, "Start");
 
-        List<Segment> segments = new ArrayList<>(); // Ühte tüüpi jooned (normaalne sõit, katkestus, sõit peale peatust)
+        List<Segment> segments = new ArrayList<>(); // One type of lines (normal running, interruption, running after a stop)
         List<CoordinatePoint> currentSegmentPoints = new ArrayList<>();
 
         DataPoint previousPoint = null;
@@ -726,6 +727,8 @@ public class KmlGenerator {
                     }
                     currentSegmentPoints.clear();
 
+                    // This block is only executed once per disruption.
+                    // 'disruptionOccurred' is set to true after the first call.
                     if(!disruptionOccurred) {
                         addDisruptedLine(doc, dayFolder, previousPoint, currentPoint);
                         disruptionOccurred = true;
@@ -825,7 +828,7 @@ public class KmlGenerator {
             }
         }
 
-        // Valmistame ette vajadusel markerite kausta
+        // We prepare a folder of markers if necessary
         Element speedMarkerFolder = null;
         if (settings.isKmSign()) {
             speedMarkerFolder = doc.createElement("Folder");
@@ -837,7 +840,7 @@ public class KmlGenerator {
             applyVisibility(speedMarkerFolder);
         }
 
-        // Lisa jooned päevakausta
+        // Add lines to the daily folder
         for (Segment segment : segments) {
             List<CoordinatePoint> points = segment.getPoints();
             if (points.size() < 2) continue;
@@ -851,13 +854,13 @@ public class KmlGenerator {
 
             createLinePlaceMark(doc, dayFolder, "Speed Line", segment);
 
-            // Lisa ikoonid eraldi kausta ainult kui piisavalt pikk
+            // Add icons to a separate folder only if long enough
             if (settings.isKmSign() && segmentLength >= 0.01 && speedMarkerFolder != null) {
                 applyVisibilityToSpeedSegmentIcons(doc, speedMarkerFolder, points);
             }
         }
 
-        // Lisa ikoonikaust päevakausta kõige lõpus
+        // Add icon folder to the very end of the day folder
         if (speedMarkerFolder != null && speedMarkerFolder.hasChildNodes()) {
             dayFolder.appendChild(speedMarkerFolder);
         }
@@ -1025,5 +1028,4 @@ public class KmlGenerator {
 
         return Math.toDegrees(Math.atan2(y, x));
     }
-
 }

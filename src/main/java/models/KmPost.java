@@ -7,6 +7,7 @@ package models;
  * Useful for visualizing distance markers or intervals along a route in mapping applications.
  */
 public record KmPost(DataPoint dataPoint, double kmNumber, double direction) {
+
     /**
      * Constructs a new {@code KmPost} with the given data point, kilometer number, and direction.
      *

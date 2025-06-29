@@ -37,7 +37,7 @@ public class Segment {
      * @param name   the name or label for the segment
      */
     public Segment(List<CoordinatePoint> points, String name) {
-        this(points, name, "lineStyleRoad"); // vaikestiil
+        this(points, name, "lineStyleRoad"); // default style
     }
 
     public List<CoordinatePoint> getPoints() {

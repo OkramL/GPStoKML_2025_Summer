@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
  * This class is immutable and thread-safe.
  */
 public record CoordinatePoint(double longitude, double latitude, ZonedDateTime pointTime) {
+
     /**
      * Constructs a new {@code CoordinatePoint} with the specified longitude, latitude,
      * and timestamp.
