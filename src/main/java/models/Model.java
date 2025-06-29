@@ -1,5 +1,15 @@
 package models;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,6 +17,8 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -127,9 +139,9 @@ public class Model {
             String description = metadata.get("description");
 
             if(settings.getTypeFile().equals(".gpx")) {
-
+                parseGpxFile(file, date, explanation, description);
             } else if(settings.getTypeFile().equals(".kml")) {
-
+                parseKmlFile(file, date, explanation, description);
             } else { // All other files
                 try {
                     BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -307,6 +319,118 @@ public class Model {
             dataPoints.add(new DataPoint(latitude, longitude, myTime, date, speed, explanation, description, setDayName(date, description)));
         }
     }
+
+    /**
+     * Parse full GPX file (Xioami Mi Band 6 track export)
+     * <trkpt lat="58.61372" lon="24.50954">
+     *  <time>2022-07-13T17:05:37Z</time>
+     *  <desc><![CDATA[CommonTimeValuePoint(absoluteTime=1657731937, value=1.8)]]></desc>
+     *  <extensions>
+     *      <ns3:TrackPointExtension>
+     *          <ns3:speed>0.5555556</ns3:speed>
+     *      </ns3:TrackPointExtension>
+     * </extensions>
+     * </trkpt>
+     * Another GPX file (Sinotrack https://gps-trace.com/)
+     * <trkpt lat="58.61295" lon="24.509427">
+     *  <time>2024-05-31T22:31:30.000Z</time>
+     * </trkpt>
+     * DateTime is UTC
+     *
+     * @param file        filename
+     * @param date        date form filename
+     * @param explanation an explanation of the filename between two _ (2023-05-31_explanation_description-no-spaces-no-more-underscores)
+     * @param description a description of the filename
+     */
+    private void parseGpxFile(File file, String date, String explanation, String description) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+        try {
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new File(String.valueOf(file)));
+            doc.getDocumentElement().normalize();
+            NodeList nodeList = doc.getElementsByTagName("trkpt");
+
+            for(int x = 0; x < nodeList.getLength(); x++) {
+                Node node = nodeList.item(x);
+                if(node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+
+                    double latitude = Double.parseDouble(element.getAttribute("lat"));
+                    double longitude = Double.parseDouble(element.getAttribute("lon"));
+                    String datetime = element.getElementsByTagName("time").item(0).getTextContent();
+                    // ISO_DATE_TIME => 2022-07-13T17:05:37Z => UTC
+                    ZonedDateTime myTime = ZonedDateTime.parse(datetime, DateTimeFormatter.ISO_DATE_TIME);
+
+                    // Some GPX files do not contain speed information (SinoTrack ST-903)
+                    double speed = 0.0;
+
+                    if(element.getElementsByTagName("ns3:speed").item(0) != null) {
+                        speed = Double.parseDouble(element.getElementsByTagName("ns3:speed").item(0).getTextContent());
+                        speed = speed * 3.6; // ms -> kmh
+                    }
+                    dataPoints.add(new DataPoint(latitude, longitude, myTime, date, speed, explanation, description, setDayName(date, description)));
+                }
+            }
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * General structure of a kml file. The coordinates are all in one block.
+     * <Document>
+     * <name>Track 20-06-2024</name>
+     * ....
+     * <Placemark>
+     * <description>Your track</description>
+     * ...
+     * <coordinates>
+     *      24.509128,58.612528
+     *      ...
+     * </coordinates>
+     * ...
+     * </Placemark>
+     * </Document>
+     *
+     * @param file        filename
+     * @param date        date from filename
+     * @param explanation an explanation of the filename between two _ (2023-05-31_explanation_description-no-spaces-no-more-underscores)
+     * @param description a description of the filename
+     */
+    private void parseKmlFile(File file, String date, String explanation, String description) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+        try {
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new File(String.valueOf(file)));
+            doc.getDocumentElement().normalize();
+            NodeList nodeList = doc.getElementsByTagName("Document");
+
+            for(int x = 0; x < nodeList.getLength(); x++) {
+                Node node = nodeList.item(x);
+                if(node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    NodeList coordinates = element.getElementsByTagName("coordinates");
+                    String result = coordinates.item(0).getTextContent().trim();
+                    String[] parts = result.split("\n");  // Split Enter or "space"
+
+                    for(String str: parts) {
+                        double latitude = Double.parseDouble(str.split(",")[1]);
+                        double longitude = Double.parseDouble(str.split(",")[0]);
+                        ZonedDateTime datetime = parseDate(date);
+                        dataPoints.add(new DataPoint(latitude, longitude, datetime, date, 0.0, explanation, description, setDayName(date, description)));
+                    }
+                }
+            }
+
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Validates whether a string matches the expected datetime format "yyyy-MM-dd HH:mm:ss".
      *
@@ -474,6 +598,18 @@ public class Model {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    /**
+     * Converts a date (YYYY-MM-DD) to a ZonedDateTime object with a time of midnight UTC
+     * @param   date date
+     * @return  ZonedDateTIme object
+     */
+    private ZonedDateTime parseDate(String date) {
+        LocalDate localDate = LocalDate.parse(date); // Convert a LocalDate to an object
+        LocalDateTime localDateTime = localDate.atStartOfDay(); // Set date time to midnight
+        ZoneId zoneId = ZoneId.of("UTC"); // Set the timezone to UTC
+        return localDateTime.atZone(zoneId);
     }
 
     // GETTERS
