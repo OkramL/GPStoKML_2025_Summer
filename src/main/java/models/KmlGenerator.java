@@ -708,10 +708,8 @@ public class KmlGenerator {
         double kmCounter = settings.getKmSteps();
         List<KmPost> kmPosts = new ArrayList<>();
 
-        for(int i = 0; i < dataPoints.size(); i++) {
-            DataPoint currentPoint = dataPoints.get(i);
-
-            if(previousPoint != null) {
+        for (DataPoint currentPoint : dataPoints) {
+            if (previousPoint != null) {
                 double distance = calculateDistance(currentPoint.getLatitude(), currentPoint.getLongitude(),
                         previousPoint.getLatitude(), previousPoint.getLongitude());
                 Duration timeDifference = Duration.between(previousPoint.getPointTime(), currentPoint.getPointTime());
@@ -720,8 +718,8 @@ public class KmlGenerator {
                 boolean stopOccurred = false;
 
                 // Handle disruptions
-                if(distance > settings.getMaxDistance()) {
-                    if(!currentSegmentPoints.isEmpty()) {
+                if (distance > settings.getMaxDistance()) {
+                    if (!currentSegmentPoints.isEmpty()) {
                         segments.add(new Segment(new ArrayList<>(currentSegmentPoints), "Normal Line"));
                         createLinePlaceMark(doc, dayFolder, "Normal Line", segments.removeLast());
                     }
@@ -729,7 +727,7 @@ public class KmlGenerator {
 
                     // This block is only executed once per disruption.
                     // 'disruptionOccurred' is set to true after the first call.
-                    if(!disruptionOccurred) {
+                    if (!disruptionOccurred) {
                         addDisruptedLine(doc, dayFolder, previousPoint, currentPoint);
                         disruptionOccurred = true;
                     }

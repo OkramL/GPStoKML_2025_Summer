@@ -151,7 +151,7 @@ public class Model {
                         switch(settings.getTypeFile()) {
                             case ".txt" -> parseTxtLine(parts, date, explanation, description);
                             case ".csv" -> parseCsvLine(parts, date, explanation, description);
-                            case ".0805", ".hero8", ".canyon" -> parseCameraLine(parts, date, explanation, description); // TODO SPEED ja see ja eelmine
+                            case ".0805", ".hero8", ".canyon" -> parseCameraLine(parts, date, explanation, description);
                         }
                     }
                 } catch (IOException e) {
@@ -305,7 +305,7 @@ public class Model {
 
         if(isDateTimeValid(datetime)) {
             ZonedDateTime myTime = ZonedDateTime.parse(datetime, dateWithMinus.withZone(ZoneId.of("UTC")));
-            // TODO The dates are in different formats .canyon and .hero8 and .0805 is separate?
+
             double latitude = Double.parseDouble(parts[1]);
             double longitude = Double.parseDouble(parts[2]);
             double speed;
