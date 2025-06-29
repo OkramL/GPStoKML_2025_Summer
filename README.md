@@ -11,7 +11,7 @@ väljavõte või mõne rakenduse eksport.
 ## Failitüüp .txt
 Fail on originaalis kaamera [Mini 0803](https://www.google.com/search?q=Mini+0803) (vana) ja 
 kaamera [Mini 0805](https://www.amacam.net/car-cameras/am-m81/) (uus). Uue kaamera GPS salvestatud andmed faili on 
-vigased, sest ei salvestta õigesti. Kui kasutada ExifTooli, saab õiged andmed videofaili lugedes.
+vigased, sest ei salvesta õigesti. Kui kasutada ExifTooli, saab õiged andmed videofaili lugedes (vaata failitüüp .0805).
 
 Vana txt (Mini 0803) faili sisu:
 ```A,030116,164432.000,+5836.7477,N,+02430.5115,E,0.29,-00.61,-07.96,-78.40;```
@@ -29,15 +29,15 @@ Faili csv sisu:
 ```335,2025/06/12,12:59:08.00,2025/06/12,15:59:08.00,58.925146,N,24.868836,E,76.3,0.0```
 
 ## Failitüüp .0805, .hero8 ja .canyon
-Antud failitüübid pole standardsed. Need on loodud rakenduse ExifTool abil mis loeb videofailidest GPS andmeid ja 
+Antud failitüübid pole standardsed. Need on loodud rakenduse ExifTool abil, mis loeb videofailidest GPS andmeid ja 
 kirjutab need logifaili.
 
-Failitüüp .0805 on kaamera Mini 0805 videofaili lugemise tulemusena saadud fail. 
+Failitüüp **.0805** on kaamera Mini 0805 videofaili lugemise tulemusena saadud fail. 
 
-Failitüüp .hero8 on [GoPro Hero 8](https://gopro.com/en/us/update/hero8-black) videofaili lugemise tulemusena saadud 
+Failitüüp **.hero8** on [GoPro Hero 8](https://gopro.com/en/us/update/hero8-black) videofaili lugemise tulemusena saadud 
 fail.
 
-Failitüüp .canyon on autokaamera [Canyon DVR40GPS](https://canyon.eu/product/cnd-dvr40gps/) videofaili lugemise 
+Failitüüp **.canyon** on autokaamera [Canyon DVR40GPS](https://canyon.eu/product/cnd-dvr40gps/) videofaili lugemise 
 tulemusena saadud fail.
 
 Teoorias võiks olla need kõik ühe failitüübiga, kuid kuna mul on kõik seadmed eraldi, siis on ka erinev laiend aga sama 
@@ -119,18 +119,18 @@ Tulemus on CameraKmz.kmz failis. Kokku oli 8 faili mida töödeldi.
 
 ![Struktuur GoogleEarth-is](Screenshots/Screenshot_tree.png)
 
-Allkriipsuga lõppevad kuupäevad sisaldavad seal kuupäeva kirjeldust (_description_) ehk sõidu marsruuti, eraldatud kohad  
-sidekriipsuga.
+Allkriipsuga lõppevad kuupäevad sisaldavad seal kuupäeva kirjeldust (_description_) ehk sõidu marsruuti, eraldatud 
+kohad sidekriipsuga.
 
 ![Google Earth](Screenshots/Screenshot_map.png)
 
-Vaikimis näeb kohe sõidus olnud parkimisi, kui neid on, kuid seal on ka algus ja lõpu ikoonid.
+Vaikimisi näeb kohe sõidus olnud parkimisi, kui neid on, kuid seal on ka algus ja lõpu ikoonid.
 
 ![Google Earth Start End and Direction](Screenshots/Screnshot_start_end_direction.png)
 
-Sõidu algus ja lõpp ning sõidu suund on ka näidatud. Klikkides ikoon saab lisa infot. Seda ei näe speed kaardil (1.0.62).
+Sõidu algus ja lõpp ning sõidu suund on ka näidatud. Klikkides ikoon saab lisa infot. Seda ei näe speed kaardil (1.0.63).
 
-# Esmane kasutus (enne loe, ja siis tee)
+# Esmane kasutus (enne loe ja siis tee)
 
 1. Lae alla First Public Release [GPStoKML_2025_Summer-1.0.63.jar](https://github.com/OkramL/GPStoKML_2025_Summer/releases/tag/1.0.63)
 2. Tee uus kaust ja kopeeri/tõsta allalaetud fail tehtud kausta
@@ -144,7 +144,7 @@ Sample settings file settings.ini has been created.
 Folder does not exist: data_files. Interrupting...
 ```
 6. Selle tulemusena loodi siia samasse ```settings.ini``` fail. Ava see fail ja vaata sisu üle. Seaded on dokumenteeritud.
-7. Järgnevaks tee olemasolevasse kausta alamkaust ```data_files```, juhul kui seda seadetes ```default_folder=data_files``` pole muutnud.
+7. Järgnevaks tee olemasolevasse kausta alamkaust ```data_files```, juhul kui seda seadetes ```default_folder=data_files``` ei muutnud.
 8. Nüüd kopeeri vajalikud logifailid kausta ```data_files```. **NB!** Failinimed peavad algama kuupäevaga kujul **AAAA-KK-PP**
 9. Käivita rakendus uuesti nagu punktis 4. Kui midagi valesti ei läinud, peaks nägema midagi sellist:
 ```
