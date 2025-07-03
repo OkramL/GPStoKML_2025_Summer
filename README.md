@@ -1,6 +1,6 @@
 # GPS to KML 2025 (Summer)
 
-Rakendus on [GPStoKML4](https://github.com/OkramL/GPStoKML4) nullist uus arendus GPS logide 
+See rakendus on rakenduse [GPStoKML4](https://github.com/OkramL/GPStoKML4)  uus arendus GPS logide 
 KML faili paigutamine päevade kaupa.
 
 # Logide tüübid
