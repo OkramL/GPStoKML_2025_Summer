@@ -725,12 +725,16 @@ public class KmlGenerator {
                     }
                     currentSegmentPoints.clear();
 
+                    if (isValidDisruption(previousPoint, currentPoint, distance)) {
+                        addDisruptedLine(doc, dayFolder, previousPoint, currentPoint);
+                    }
+
                     // This block is only executed once per disruption.
                     // 'disruptionOccurred' is set to true after the first call.
-                    if (!disruptionOccurred) {
-                        addDisruptedLine(doc, dayFolder, previousPoint, currentPoint);
-                        disruptionOccurred = true;
-                    }
+//                    if (!disruptionOccurred) {
+//                        addDisruptedLine(doc, dayFolder, previousPoint, currentPoint);
+//                        disruptionOccurred = true;
+//                    }
                 }
 
                 // Handle stops
@@ -906,6 +910,34 @@ public class KmlGenerator {
         Element directionPlacemark = createDirectionMarker(doc, start, heading);
         applyVisibility(directionPlacemark);
         parentFolder.appendChild(directionPlacemark);
+    }
+
+    /**
+     * Checks whether the disruption between two data points is realistic (i.e., a disrupted line should be drawn).
+     */
+    private boolean isValidDisruption(DataPoint previous, DataPoint current, double distanceKm) {
+        Duration timeDiff = Duration.between(previous.getPointTime(), current.getPointTime());
+
+        // Wrong times
+        if (timeDiff.isZero() || timeDiff.isNegative()) {
+            return false;
+        }
+
+        long timeSeconds = timeDiff.getSeconds();
+        double hours = timeSeconds / 3600.0;
+        double speed = distanceKm / hours;
+
+        // Moving too fast – for example, over 300 km/h is not realistic
+        if (speed > 300) { // 300.0 settings.getMaxDisruptionSpeed()
+            return false;
+        }
+
+        // Too long a gap – the interruption cannot be drawn, rather a stop or loss of signal
+        if (timeSeconds > (4 * 3600)) { // (4 * 3600) settings.getMaxDisruptionGapSeconds()
+            return false;
+        }
+
+        return true; // The disruption is realistic and can draw a disrupted line.
     }
 
     /**
