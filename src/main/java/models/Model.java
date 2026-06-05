@@ -1,16 +1,10 @@
 package models;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,9 +16,28 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class Model {
     private final Settings settings;
@@ -138,24 +151,26 @@ public class Model {
             String explanation = metadata.get("explanation");
             String description = metadata.get("description");
 
-            if(settings.getTypeFile().equals(".gpx")) {
-                parseGpxFile(file, date, explanation, description);
-            } else if(settings.getTypeFile().equals(".kml")) {
-                parseKmlFile(file, date, explanation, description);
-            } else { // All other files
-                try {
-                    BufferedReader reader = new BufferedReader(new FileReader(file));
-                    String line;
-                    while((line = reader.readLine()) != null) {
-                        String[] parts = line.split(",");
-                        switch(settings.getTypeFile()) {
-                            case ".txt" -> parseTxtLine(parts, date, explanation, description);
-                            case ".csv" -> parseCsvLine(parts, date, explanation, description);
-                            case ".0805", ".hero8", ".canyon" -> parseCameraLine(parts, date, explanation, description);
+            switch (settings.getTypeFile()) {
+                case ".gpx" -> parseGpxFile(file, date, explanation, description);
+                case ".kml" -> parseKmlFile(file, date, explanation, description);
+                default -> {
+                    // All other files
+                    try {
+                        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                            String line;
+                            while((line = reader.readLine()) != null) {
+                                String[] parts = line.split(",");
+                                switch(settings.getTypeFile()) {
+                                    case ".txt" -> parseTxtLine(parts, date, explanation, description);
+                                    case ".csv" -> parseCsvLine(parts, date, explanation, description);
+                                    case ".0805", ".hero8", ".canyon" -> parseCameraLine(parts, date, explanation, description);
+                                }
+                            }
                         }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }
         }
